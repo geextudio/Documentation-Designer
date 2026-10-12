@@ -1,0 +1,1 @@
+Generate Blazor documentation.

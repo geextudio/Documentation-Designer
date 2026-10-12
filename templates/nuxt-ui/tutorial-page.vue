@@ -1,0 +1,1 @@
+<template><div>Nuxt UI Tutorial Template</div></template>

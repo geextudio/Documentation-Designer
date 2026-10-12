@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>现代交互式技术教程模板 - Documentation Designer Pro</title>
+  <!-- Tailwind CSS Play CDN for rapid styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Mermaid.js for diagrams -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: ['selector', '[data-theme="dark"]'],
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* ==========================================================================
+       CSS Variables & Design Tokens (from tutorial-color-palette)
+       ========================================================================== */
+    :root {
+      --bg-canvas: #F8FAFC;
+      --bg-surface: #FFFFFF;
+      --border-subtle: #E2E8F0;
+      --border-strong: #CBD5E1;
+      --text-main: #0F172A;
+      --text-muted: #64748B;
+      --code-bg: #0F172A;
+      --code-border: #1E293B;
+      --code-text: #E2E8F0;
+    }
+
+    [data-theme='dark'] {
+      --bg-canvas: #0B0F19;
+      --bg-surface: #111827;
+      --border-subtle: #1F2937;
+      --border-strong: #374151;
+      --text-main: #F3F4F6;
+      --text-muted: #9CA3AF;
+      --code-bg: #030712;
+      --code-border: #1F2937;
+      --code-text: #E5E7EB;
+    }
+
+    body {
+      background-color: var(--bg-canvas);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Noto Sans SC", sans-serif;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Reading Measure Limit (from tutorial-reading-experience) */
+    .prose-container {
+      max-width: 72ch;
+      margin-left: auto;
+      margin-right: auto;
+      line-height: 1.8;
+      font-size: 1.03125rem;
+    }
+
+    /* Anchor Offset for Sticky Nav */
+    h1, h2, h3, h4 {
+      scroll-margin-top: 5rem;
+    }
+
+    /* Reading Progress Bar */
+    #progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #3B82F6, #8B5CF6);
+      width: 0%;
+      z-index: 100;
+      transition: width 0.1s ease-out;
+    }
+
+    /* Scrollbars */
+    pre::-webkit-scrollbar, .overflow-x-auto::-webkit-scrollbar {
+      height: 6px;
+    }
+    pre::-webkit-scrollbar-thumb, .overflow-x-auto::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.4);
+      border-radius: 9999px;
+    }
+
+    /* Active TOC Highlight */
+    .toc-link.active {
+      color: #3B82F6;
+      font-weight: 600;
+      border-left: 2px solid #3B82F6;
+      padding-left: 0.5rem;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col transition-colors duration-200">
+
+  <!-- Top Reading Progress Indicator -->
+  <div id="progress-bar"></div>
+
+  <!-- Sticky Header -->
+  <header class="sticky top-0 z-40 bg-[var(--bg-surface)]/90 backdrop-blur-md border-b border-[var(--border-subtle)] px-4 lg:px-8 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <button id="mobile-menu-btn" class="lg:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300" aria-label="Toggle Navigation">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <div class="flex items-center gap-2">
+        <span class="w-8 h-8 rounded-lg bg-blue-600 text-white font-bold flex items-center justify-center text-sm shadow-sm">D</span>
+        <span class="font-bold tracking-tight text-slate-900 dark:text-white">DocDesigner Pro</span>
+        <span class="hidden sm:inline-block text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 ml-1">Tutorial</span>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <span class="hidden md:inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        预计阅读 10 分钟 · 难度：中级
+      </span>
+
+      <!-- Theme Switcher -->
+      <button id="theme-toggle" class="p-2 rounded-lg border border-[var(--border-subtle)] hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors" title="切换深色/浅色模式">
+        <span id="theme-icon">🌙</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 3-Column Responsive Layout Body -->
+  <div class="flex-1 max-w-[1440px] w-full mx-auto grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)_240px] gap-6 px-4 lg:px-8 py-6">
+
+    <!-- Left Sidebar: Course Outline / Modules -->
+    <aside id="left-sidebar" class="hidden lg:block sticky top-20 h-[calc(100vh-6rem)] overflow-y-auto pr-4 text-sm space-y-6">
+      <div>
+        <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">系列章节</h4>
+        <ul class="space-y-1.5 font-medium">
+          <li><a href="#" class="block px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-semibold">1. 环境准备与架构总览</a></li>
+          <li><a href="#" class="block px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">2. 核心状态流与契约设计</a></li>
+          <li><a href="#" class="block px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">3. API 联调与端到端测试</a></li>
+          <li><a href="#" class="block px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">4. 生产部署与监控追踪</a></li>
+        </ul>
+      </div>
+
+      <div class="p-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-xs space-y-2">
+        <div class="font-semibold text-slate-800 dark:text-slate-200">💡 教程配套资源</div>
+        <a href="#" class="block text-blue-600 dark:text-blue-400 hover:underline">GitHub 代码仓库 ↗</a>
+        <a href="#" class="block text-blue-600 dark:text-blue-400 hover:underline">在线 Playground 演示 ↗</a>
+      </div>
+    </aside>
+
+    <!-- Main Content Area: Standard Measure (60-75ch) -->
+    <main class="w-full">
+      <article class="prose-container pb-24">
+
+        <!-- Breadcrumb & Badges -->
+        <nav class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-4">
+          <a href="#" class="hover:underline">教程首页</a>
+          <span>/</span>
+          <a href="#" class="hover:underline">工程实践</a>
+          <span>/</span>
+          <span class="text-slate-800 dark:text-slate-200 font-medium">第 1 章：环境与架构总览</span>
+        </nav>
+
+        <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-4">
+          现代微服务流式数据处理教程
+        </h1>
+
+        <p class="text-lg text-slate-600 dark:text-slate-300 font-normal leading-relaxed mb-6">
+          在本篇实践教程中，我们将自底向上搭建一套具备高吞吐、背压控制与自愈机制的流式处理微服务。你将掌握契约编排、轻量响应式布局和优雅异常降级。
+        </p>
+
+        <!-- Learning Objectives Box -->
+        <div class="p-4 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/70 dark:bg-blue-950/20 mb-8">
+          <div class="flex items-center gap-2 font-semibold text-blue-900 dark:text-blue-300 text-sm mb-2">
+            <span>🎯 本节学习目标</span>
+          </div>
+          <ul class="text-sm text-blue-800 dark:text-blue-200 space-y-1 list-disc list-inside">
+            <li>理解事件驱动流水线的核心架构与边界隔离</li>
+            <li>完成 Docker 容器化集成与本地开发依赖启动</li>
+            <li>实现首个具备重试机制的异步消费者 Pipeline</li>
+          </ul>
+        </div>
+
+        <!-- Section 1 -->
+        <h2 id="section-1" class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mt-10 mb-4">
+          1. 架构流向与拓扑全景
+        </h2>
+        <p class="mb-4 text-slate-700 dark:text-slate-300">
+          系统整体采用解耦式发布-订阅架构。数据经过统一网关校验后，进入可靠的消息队列，随后由 worker 集群消费并写入分布式持久层。
+        </p>
+
+        <!-- Responsive Mermaid Diagram Container -->
+        <div class="my-6 p-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] shadow-sm">
+          <div class="text-xs text-slate-400 font-medium mb-3 flex items-center justify-between">
+            <span>系统架构时序 / 数据流向图</span>
+            <span class="text-blue-500 text-[11px]">可交互矢量图</span>
+          </div>
+          <div class="mermaid text-center overflow-x-auto py-2">
+graph LR
+    Client[客户端 Client] -->|HTTP REST/gRPC| Gateway[API 网关]
+    Gateway -->|投递事件| Kafka[Event Broker]
+    Kafka -->|拉取消费| WorkerA[Worker 节点 A]
+    Kafka -->|拉取消费| WorkerB[Worker 节点 B]
+    WorkerA -->|持久化| DB[(TimescaleDB)]
+    WorkerB -->|持久化| DB
+          </div>
+        </div>
+
+        <!-- Section 2: Step-by-Step Anatomy -->
+        <h2 id="section-2" class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mt-12 mb-4">
+          2. 步骤一：创建项目配置与环境变量
+        </h2>
+        <p class="mb-4 text-slate-700 dark:text-slate-300">
+          我们使用声明式类型检查保证启动时能捕获所有配置遗漏，避免运行时抛出未捕获异常。
+        </p>
+
+        <!-- Standard High-Friction Code Block with File Tag & Copy Button -->
+        <div class="my-6 rounded-xl overflow-hidden border border-[var(--code-border)] bg-[var(--code-bg)] shadow-md">
+          <!-- Code Block Header -->
+          <div class="flex items-center justify-between px-4 py-2.5 bg-slate-800/80 border-b border-slate-700/60 text-xs">
+            <span class="font-mono text-slate-300 flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              src/config/runtime.ts
+            </span>
+            <button class="copy-btn flex items-center gap-1 text-slate-400 hover:text-white transition-colors" data-code="import { z } from 'zod';
+
+export const ConfigSchema = z.object({
+  KAFKA_BROKERS: z.string().default('localhost:9092'),
+  DATABASE_URL: z.string().url(),
+  RETRY_MAX_ATTEMPTS: z.coerce.number().min(1).default(3),
+});
+
+export type RuntimeConfig = z.infer<typeof ConfigSchema>;">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+              <span class="copy-label">复制</span>
+            </button>
+          </div>
+          <!-- Preformatted Code Area -->
+          <pre class="p-4 text-sm font-mono text-[var(--code-text)] overflow-x-auto leading-relaxed"><code><span class="text-purple-400">import</span> { z } <span class="text-purple-400">from</span> <span class="text-green-300">'zod'</span>;
+
+<span class="text-purple-400">export const</span> <span class="text-yellow-300">ConfigSchema</span> = z.object({
+  <span class="text-blue-300">KAFKA_BROKERS</span>: z.string().default(<span class="text-green-300">'localhost:9092'</span>),
+  <span class="text-blue-300">DATABASE_URL</span>: z.string().url(),
+  <span class="text-blue-300">RETRY_MAX_ATTEMPTS</span>: z.coerce.number().min(1).default(3),
+});
+
+<span class="text-purple-400">export type</span> <span class="text-yellow-300">RuntimeConfig</span> = z.infer&lt;<span class="text-purple-400">typeof</span> ConfigSchema&gt;;</code></pre>
+        </div>
+
+        <!-- Semantic Callout: Warning -->
+        <div class="my-6 p-4 rounded-xl border border-amber-300 dark:border-amber-700/60 bg-amber-50 dark:bg-amber-950/20 flex gap-3 text-sm">
+          <div class="text-amber-600 dark:text-amber-400 text-lg flex-shrink-0">⚠️</div>
+          <div>
+            <div class="font-semibold text-amber-900 dark:text-amber-300 mb-1">注意环境变量格式</div>
+            <p class="text-amber-800 dark:text-amber-200">
+              如果使用容器网络，请确保 `KAFKA_BROKERS` 不填写 `127.0.0.1`，而应配置为宿主服务名 `kafka:9092`，以防止容器间跨网段隔离报错。
+            </p>
+          </div>
+        </div>
+
+        <!-- Section 3: Deep Dive Collapsible Accordion -->
+        <h2 id="section-3" class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mt-12 mb-4">
+          3. 验证与预期运行结果
+        </h2>
+        <p class="mb-4 text-slate-700 dark:text-slate-300">
+          执行单元测试并观察初始化状态输出，确认流水线已经正常挂载。
+        </p>
+
+        <!-- Terminal Output -->
+        <div class="my-4 rounded-xl overflow-hidden border border-slate-700 bg-slate-950 text-slate-200 text-xs font-mono p-4">
+          <div class="text-slate-500 mb-2 font-sans text-[11px]">$ pnpm test:pipeline</div>
+          <div class="text-emerald-400">✔ [Pipeline] Schema validated successfully.</div>
+          <div class="text-emerald-400">✔ [Kafka] Connected to partition leader [topic=telemetry-raw, p=0].</div>
+          <div class="text-blue-400">ℹ [Worker] Backpressure threshold configured at 5000 items/sec.</div>
+          <div class="text-slate-400 mt-2">✨ Tests passed (2 suites, 6 passed, 0 failed). Duration: 1.42s</div>
+        </div>
+
+        <!-- Progressive Disclosure: Collapsible Details -->
+        <details class="my-6 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-4 text-sm group">
+          <summary class="font-semibold text-slate-800 dark:text-slate-200 cursor-pointer list-none flex items-center justify-between select-none">
+            <span class="flex items-center gap-2">
+              <span class="text-blue-600">🔍</span> 深度原理解析：背压（Backpressure）是如何生效的？
+            </span>
+            <span class="text-slate-400 group-open:rotate-180 transition-transform">▼</span>
+          </summary>
+          <div class="mt-3 pt-3 border-t border-[var(--border-subtle)] text-slate-600 dark:text-slate-300 space-y-2">
+            <p>
+              当消费者吞吐落后于生产者速率时，内存缓冲区将会膨胀。我们通过动态拉取批次窗口与反应式流契约，让 Consumer 自动调高拉取间距，促使上游减缓投递速率。
+            </p>
+          </div>
+        </details>
+
+        <!-- Chapter Pagination Navigation -->
+        <div class="mt-14 pt-8 border-t border-[var(--border-subtle)] grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <a href="#" class="p-4 rounded-xl border border-[var(--border-subtle)] hover:border-blue-400 bg-[var(--bg-surface)] transition-all flex flex-col justify-center">
+            <span class="text-xs text-slate-400">← 上一节</span>
+            <span class="text-sm font-semibold text-slate-800 dark:text-slate-200 mt-1">序言与技术栈选型</span>
+          </a>
+          <a href="#" class="p-4 rounded-xl border border-[var(--border-subtle)] hover:border-blue-400 bg-[var(--bg-surface)] transition-all flex flex-col justify-center text-right sm:items-end">
+            <span class="text-xs text-blue-500 font-medium">下一节 →</span>
+            <span class="text-sm font-semibold text-slate-800 dark:text-slate-200 mt-1">2. 核心状态流与契约设计</span>
+          </a>
+        </div>
+
+      </article>
+    </main>
+
+    <!-- Right Sidebar: Sticky Table of Contents (TOC) -->
+    <aside class="hidden lg:block sticky top-20 h-[calc(100vh-6rem)] overflow-y-auto pl-2 text-sm">
+      <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">本页目录</h4>
+      <nav class="space-y-2 text-xs">
+        <a href="#section-1" class="toc-link block text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">1. 架构流向与拓扑全景</a>
+        <a href="#section-2" class="toc-link block text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">2. 步骤一：创建项目配置与环境变量</a>
+        <a href="#section-3" class="toc-link block text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">3. 验证与预期运行结果</a>
+      </nav>
+      
+      <div class="mt-8 pt-6 border-t border-[var(--border-subtle)]">
+        <a href="#top" class="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 flex items-center gap-1">
+          ↑ 返回顶部
+        </a>
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- Global Footer (Subtle & Elegant) -->
+  <footer class="mt-auto border-t border-[var(--border-subtle)] bg-[var(--bg-surface)]/60 py-6 pb-20 lg:pb-6 text-center text-xs text-slate-400 dark:text-slate-500">
+    <div class="max-w-[1440px] mx-auto px-4 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2.5">
+      <div class="flex items-center gap-1.5">
+        <span class="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block"></span>
+        <span class="font-medium text-slate-600 dark:text-slate-400">Documentation Designer Pro</span>
+      </div>
+      <div>
+        <span>&copy; <span id="footer-year">2026</span> &middot; Created by <span class="font-medium text-slate-600 dark:text-slate-300">Geextudio</span></span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Mobile Floating / Bottom-Docked Action Bar (tutorial-responsive-layout) -->
+  <div class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[var(--bg-surface)]/95 backdrop-blur-md border-t border-[var(--border-subtle)] px-4 py-3 flex items-center justify-between text-xs shadow-lg">
+    <button class="px-3 py-1.5 rounded-lg border border-[var(--border-subtle)] text-slate-700 dark:text-slate-300 font-medium">
+      ← 上一小节
+    </button>
+    <span class="text-slate-500 font-medium">1 / 4 章</span>
+    <button class="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700">
+      下一节 →
+    </button>
+  </div>
+
+  <!-- Core Scripts: Theme, Reading Progress, Copy Code, Scrollspy -->
+  <script>
+    // 1. Mermaid Initialization
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default',
+      securityLevel: 'loose'
+    });
+
+    // 2. Dark/Light Theme Switcher
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    const themeIcon = document.getElementById('theme-icon');
+    
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('doc_theme', theme);
+      themeIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
+    }
+
+    const savedTheme = localStorage.getItem('doc_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    setTheme(savedTheme);
+
+    themeToggleBtn.addEventListener('click', () => {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+    });
+
+    // 3. Scroll Reading Progress Bar
+    window.addEventListener('scroll', () => {
+      const winScroll = document.documentElement.scrollTop || document.body.scrollTop;
+      const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      const scrolled = (winScroll / height) * 100;
+      document.getElementById('progress-bar').style.width = scrolled + '%';
+    });
+
+    // 4. One-Click Code Copying
+    document.querySelectorAll('.copy-btn').forEach(button => {
+      button.addEventListener('click', async () => {
+        const codeText = button.getAttribute('data-code');
+        const label = button.querySelector('.copy-label');
+        try {
+          await navigator.clipboard.writeText(codeText);
+          label.textContent = '已复制!';
+          button.classList.add('text-green-400');
+          setTimeout(() => {
+            label.textContent = '复制';
+            button.classList.remove('text-green-400');
+          }, 2000);
+        } catch (err) {
+          console.error('Failed to copy code: ', err);
+        }
+      });
+    });
+
+    // 5. Scrollspy for Active TOC Link
+    const sections = document.querySelectorAll('article h2[id]');
+    const navLinks = document.querySelectorAll('.toc-link');
+
+    window.addEventListener('scroll', () => {
+      let current = '';
+      sections.forEach(section => {
+        const sectionTop = section.offsetTop - 120;
+        if (window.pageYOffset >= sectionTop) {
+          current = section.getAttribute('id');
+        }
+      });
+
+      navLinks.forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === `#${current}`) {
+          link.classList.add('active');
+        }
+      });
+    });
+
+    // 6. Dynamic Footer Year
+    const footerYearEl = document.getElementById('footer-year');
+    if (footerYearEl) {
+      footerYearEl.textContent = new Date().getFullYear();
+    }
+  </script>
+</body>
+</html>

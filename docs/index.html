@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>在 VS Code 中使用 GitHub Copilot Chat 与 Agentic Engineering 构建现代技术教程指南</title>
+  <!-- Tailwind CSS Play CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Mermaid.js for Diagrams -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: ['selector', '[data-theme="dark"]'],
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              200: '#bfdbfe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* ==========================================================================
+       Design Tokens & Variables (Aligned with tutorial-color-palette)
+       ========================================================================== */
+    :root {
+      --bg-canvas: #F8FAFC;
+      --bg-surface: #FFFFFF;
+      --border-subtle: #E2E8F0;
+      --border-strong: #CBD5E1;
+      --text-main: #0F172A;
+      --text-muted: #64748B;
+      --code-bg: #0F172A;
+      --code-border: #1E293B;
+      --code-text: #E2E8F0;
+      --card-highlight: #EFF6FF;
+    }
+
+    [data-theme='dark'] {
+      --bg-canvas: #0B0F19;
+      --bg-surface: #111827;
+      --border-subtle: #1F2937;
+      --border-strong: #374151;
+      --text-main: #F3F4F6;
+      --text-muted: #9CA3AF;
+      --code-bg: #030712;
+      --code-border: #1F2937;
+      --code-text: #E5E7EB;
+      --card-highlight: rgba(30, 58, 138, 0.2);
+    }
+
+    body {
+      background-color: var(--bg-canvas);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Noto Sans SC", sans-serif;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Reading Measure Limit (Aligned with tutorial-reading-experience) */
+    .prose-container {
+      max-width: 72ch;
+      margin-left: auto;
+      margin-right: auto;
+      line-height: 1.8;
+      font-size: 1.03125rem;
+    }
+
+    /* Anchor Offset for Sticky Nav */
+    h1, h2, h3, h4 {
+      scroll-margin-top: 5.5rem;
+    }
+
+    /* Reading Progress Bar */
+    #progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #3B82F6, #8B5CF6);
+      width: 0%;
+      z-index: 100;
+      transition: width 0.1s ease-out;
+    }
+
+    /* Custom Scrollbars */
+    pre::-webkit-scrollbar, .overflow-x-auto::-webkit-scrollbar {
+      height: 6px;
+    }
+    pre::-webkit-scrollbar-thumb, .overflow-x-auto::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.4);
+      border-radius: 9999px;
+    }
+
+    /* Active Table of Contents */
+    .toc-link.active {
+      color: #3B82F6;
+      font-weight: 600;
+      border-left: 2px solid #3B82F6;
+      padding-left: 0.5rem;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col transition-colors duration-200">
+
+  <!-- Top Scroll Reading Progress -->
+  <div id="progress-bar"></div>
+
+  <!-- Header -->
+  <header class="sticky top-0 z-40 bg-[var(--bg-surface)]/90 backdrop-blur-md border-b border-[var(--border-subtle)] px-4 lg:px-8 py-3.5 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2">
+        <span class="w-8 h-8 rounded-lg bg-blue-600 text-white font-bold flex items-center justify-center text-sm shadow-sm">D</span>
+        <span class="font-bold tracking-tight text-slate-900 dark:text-white">Documentation Designer Pro</span>
+        <span class="hidden sm:inline-block text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 ml-1">Copilot Chat Guide</span>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-4">
+      <span class="hidden md:inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+        <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        预计阅读 12 分钟 · 难度：中级
+      </span>
+
+      <!-- Dark / Light Mode Switcher -->
+      <button id="theme-toggle" class="p-2 rounded-lg border border-[var(--border-subtle)] hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors" title="切换深色/浅色模式">
+        <span id="theme-icon">🌙</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 3-Column Documentation Layout (Desktop: 3-Col, Mobile: 1-Col) -->
+  <div class="flex-1 max-w-[1440px] w-full mx-auto grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)_240px] gap-8 px-4 lg:px-8 py-8">
+
+    <!-- Left Navigation: Series Structure -->
+    <aside id="left-sidebar" class="hidden lg:block sticky top-24 h-[calc(100vh-7rem)] overflow-y-auto pr-4 text-sm space-y-6">
+      <div>
+        <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">指南导引</h4>
+        <ul class="space-y-1.5 font-medium">
+          <li><a href="#overview" class="block px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-semibold">1. 核心理念与资产总览</a></li>
+          <li><a href="#workflow" class="block px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">2. 协同流水线拓扑</a></li>
+          <li><a href="#step-by-step" class="block px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">3. VS Code 实战四步法</a></li>
+          <li><a href="#prompt-library" class="block px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">4. 即用型提示词库</a></li>
+          <li><a href="#dual-format" class="block px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">5. 双格式产物交付</a></li>
+          <li><a href="#rubric" class="block px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">6. 质量验收与打分表</a></li>
+        </ul>
+      </div>
+
+      <div class="p-3.5 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-xs space-y-2.5">
+        <div class="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+          <span>🛠️</span> 关键关联资产
+        </div>
+        <div class="space-y-1 text-slate-500 dark:text-slate-400">
+          <p>• 规则中枢：<code class="text-blue-600 dark:text-blue-400">AGENTS.md</code></p>
+          <p>• 设计规范：<code class="text-blue-600 dark:text-blue-400">docs/design-system.md</code></p>
+          <p>• 评价准则：<code class="text-blue-600 dark:text-blue-400">documentation-rubric.md</code></p>
+          <p>• 产物模板：<code class="text-blue-600 dark:text-blue-400">tutorial-template.html</code></p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Center Main Content (Restricted Measure: 60-75ch) -->
+    <main class="w-full">
+      <article class="prose-container pb-28">
+
+        <!-- Breadcrumb -->
+        <nav class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-4">
+          <span>Agentic Engineering</span>
+          <span>/</span>
+          <span>VS Code 实战</span>
+          <span>/</span>
+          <span class="text-slate-800 dark:text-slate-200 font-medium">Copilot Chat 教程创作指南</span>
+        </nav>
+
+        <!-- Main Title -->
+        <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-4">
+          在 VS Code 中使用 GitHub Copilot Chat 与 Agentic Engineering 构建现代技术教程指南
+        </h1>
+
+        <p class="text-lg text-slate-600 dark:text-slate-300 font-normal leading-relaxed mb-6">
+          如何摆脱千篇一律、枯燥无味的纯文本教程？本教程通过实战演示，手把手带你在 VS Code 中利用 GitHub Copilot Chat 与本工作区固化的 Agentic Engineering 资产（AGENTS.md、13 个专业 Skills 及设计系统），一键生成具备现代化 SaaS 审美、优秀阅读体验、防横滚溢出并能开箱双击运行的工业级技术教程。
+        </p>
+
+        <!-- Learning Goals Card -->
+        <div class="p-4 sm:p-5 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/70 dark:bg-blue-950/20 mb-8">
+          <div class="flex items-center gap-2 font-semibold text-blue-900 dark:text-blue-300 text-sm mb-2.5">
+            <span>🎯 本篇学习目标</span>
+          </div>
+          <ul class="text-sm text-blue-800 dark:text-blue-200 space-y-1.5 list-disc list-inside">
+            <li>理解 Copilot Chat 如何在上下文感知中自动加载并运用本地 Agentic 规则</li>
+            <li>掌握通过精准提示词编排 <code class="font-mono text-xs bg-blue-100 dark:bg-blue-900/50 px-1 py-0.5 rounded">tutorial-color-palette</code>、<code class="font-mono text-xs bg-blue-100 dark:bg-blue-900/50 px-1 py-0.5 rounded">tutorial-reading-experience</code> 等 Skill 的技巧</li>
+            <li>学会编写符合认知心理学的“四步动作节拍”教程正文与渐进式原理卡片</li>
+            <li>实现同时输出标准 Markdown 与独立单文件 <code class="font-mono text-xs bg-blue-100 dark:bg-blue-900/50 px-1 py-0.5 rounded">index.html</code> 的双格式闭环交付</li>
+          </ul>
+        </div>
+
+        <!-- Section 1 -->
+        <h2 id="overview" class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mt-12 mb-4">
+          1. 核心理念与资产总览
+        </h2>
+        <p class="mb-4 text-slate-700 dark:text-slate-300">
+          传统 AI 编写教程往往存在<strong>代码无来源标识、宽屏行宽无限拉伸致眼疲劳、移动端代码把页面撑破、缺乏运行验证</strong>等痛点。而在本工程体系中，我们通过将工程经验具象化为一系列结构化文件，实现了对大模型生成过程的精密引导：
+        </p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 my-6">
+          <div class="p-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] shadow-sm">
+            <div class="font-bold text-sm text-slate-900 dark:text-white mb-1.5 flex items-center gap-2">
+              <span class="text-blue-500">🎨</span> 视觉与体验 Skill 族
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              包含 <code>tutorial-color-palette</code>（双模防眩光调色板）、<code>tutorial-reading-experience</code>（60-75ch黄金行宽与排版韵律）、<code>tutorial-responsive-layout</code>（多端响应与移动触控）等。
+            </p>
+          </div>
+          <div class="p-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] shadow-sm">
+            <div class="font-bold text-sm text-slate-900 dark:text-white mb-1.5 flex items-center gap-2">
+              <span class="text-emerald-500">📐</span> 教学与架构 Skill 族
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              包含 <code>learning-path-engine</code>（章节路径与认知节奏）、<code>documentation-designer</code>（四步节拍与双交付架构）、<code>code-snippet-enhancer</code> 与 <code>diagram-architect</code> 等。
+            </p>
+          </div>
+        </div>
+
+        <!-- Section 2 -->
+        <h2 id="workflow" class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mt-12 mb-4">
+          2. 协同流水线拓扑
+        </h2>
+        <p class="mb-4 text-slate-700 dark:text-slate-300">
+          在 VS Code 中通过 GitHub Copilot Chat 发出指令后，Agent 内部会依序启动以下四个阶段的协同流水线：
+        </p>
+
+        <!-- Mermaid Diagram Container -->
+        <div class="my-6 p-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] shadow-sm">
+          <div class="text-xs text-slate-400 font-medium mb-3 flex items-center justify-between">
+            <span>Copilot Chat 协同流水线执行全景</span>
+            <span class="text-blue-500 text-[11px]">响应式自适应矢量图</span>
+          </div>
+          <div class="mermaid text-center overflow-x-auto py-2">
+graph TD
+    UserReq([用户输入: 教程主题与受众]) --> Phase1[阶段 1: 教学认知规划]
+    subgraph Phase1[阶段 1: 教学认知规划]
+        LPE[learning-path-engine: 章节递进与耗时]
+        DOCD[documentation-designer: 目标与四步节拍]
+    end
+
+    Phase1 --> Phase2[阶段 2: 视觉体验与布局工程]
+    subgraph Phase2[阶段 2: 视觉体验与布局工程]
+        TCP[tutorial-color-palette: 低眩光/明暗双模/语义色]
+        TRE[tutorial-reading-experience: 60-75ch黄金行宽]
+        TRL[tutorial-responsive-layout: 移动端单栏/横滚隔离]
+        TUO[tutorial-ui-optimizer: 现代SaaS微质感]
+    end
+
+    Phase2 --> Phase3[阶段 3: 代码与图表强化]
+    subgraph Phase3[阶段 3: 代码与图表强化]
+        CSE[code-snippet-enhancer: 路径标识/一键复制/Diff]
+        DIA[diagram-architect: 响应式 Mermaid 拓扑图]
+    end
+
+    Phase3 --> Phase4[阶段 4: 质检验收与双格式交付]
+    subgraph Phase4[阶段 4: 质检验收与双格式交付]
+        A11Y[accessibility-reviewer: WCAG 2.1 对比度]
+        OUT_MD[制品一: 语义化 Markdown]
+        OUT_HTML[制品二: 独立可运行 index.html]
+    end
+          </div>
+        </div>
+
+        <!-- Section 3 -->
+        <h2 id="step-by-step" class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mt-12 mb-4">
+          3. VS Code 实战四步操作法
+        </h2>
+        <p class="mb-4 text-slate-700 dark:text-slate-300">
+          按照以下四步法，在 VS Code 中无缝调动 Agentic Engineering 体系：
+        </p>
+
+        <!-- Sub-step 1 -->
+        <h3 id="step-1" class="text-lg font-bold text-slate-900 dark:text-white mt-8 mb-3">
+          步骤一：打开工作区并注入上下文引用
+        </h3>
+        <p class="mb-3 text-slate-700 dark:text-slate-300">
+          在 VS Code 中通过快捷键 <kbd class="px-1.5 py-0.5 text-xs font-mono bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded shadow-sm">Ctrl+Shift+I</kbd> 或 <kbd class="px-1.5 py-0.5 text-xs font-mono bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded shadow-sm">Cmd+Shift+I</kbd> 打开 GitHub Copilot Chat。在提问框中，可以通过引用当前工作区文件确保 Agent 获取最新规则。
+        </p>
+
+        <!-- Sub-step 2 -->
+        <h3 id="step-2" class="text-lg font-bold text-slate-900 dark:text-white mt-8 mb-3">
+          步骤二：选用结构化创作提示词 (Prompt)
+        </h3>
+        <p class="mb-3 text-slate-700 dark:text-slate-300">
+          输入包含明确 Skill 指引和交付要求的结构化提示词。例如明确要求“四步动作节拍”、“黄金行宽 60-75ch”、“明暗低眩光”以及“输出独立完整 index.html”。
+        </p>
+
+        <!-- Code Block 1 -->
+        <div class="my-6 rounded-xl overflow-hidden border border-[var(--code-border)] bg-[var(--code-bg)] shadow-md">
+          <div class="flex items-center justify-between px-4 py-2.5 bg-slate-800/80 border-b border-slate-700/60 text-xs">
+            <span class="font-mono text-slate-300 flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              Copilot Chat Input Prompt
+            </span>
+            <button class="copy-btn flex items-center gap-1 text-slate-400 hover:text-white transition-colors" data-code="请基于本工作区的 Agentic Engineering 体系（严格遵循 AGENTS.md、docs/design-system.md 以及相关 Skills），为我生成关于【例如：Node.js 高性能流式数据处理】的现代技术教程。
+
+要求：
+1. 教学设计：依据 learning-path-engine 和 documentation-designer，开篇包含学习目标与预计耗时，正文采用四步动作节拍，次要技术细节使用可折叠卡片封装。
+2. 视觉与排版：依据 tutorial-color-palette 与 tutorial-reading-experience，配置低眩光明暗双模底色（#F8FAFC / #0B0F19），行宽严格限制在 60-75ch，标题设置滚动防遮挡偏移。
+3. 交互与多端：依据 code-snippet-enhancer 和 tutorial-responsive-layout，代码块标注文件路径与一键复制；宽表格与长代码在内部横滚；包含 1 个自适应 Mermaid 流程图。
+4. 双格式输出：
+   - 输出完整的规范 Markdown 内容；
+   - 输出基于 templates/html/tutorial-template.html 结构的独立可运行单文件 index.html。">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+              <span class="copy-label">复制</span>
+            </button>
+          </div>
+          <pre class="p-4 text-sm font-mono text-[var(--code-text)] overflow-x-auto leading-relaxed"><code><span class="text-slate-400"># 发送给 GitHub Copilot Chat 的规范提示词</span>
+请基于本工作区的 Agentic Engineering 体系（严格遵循 AGENTS.md、docs/design-system.md 以及相关 Skills），为我生成关于【主题】的现代技术教程。
+
+要求：
+1. 教学设计：依据 learning-path-engine 和 documentation-designer，开篇包含学习目标与预计耗时，正文采用四步动作节拍，次要技术细节使用折叠卡片封装。
+2. 视觉与排版：依据 tutorial-color-palette 与 tutorial-reading-experience，配置低眩光明暗双模底色，行宽限制在 60-75ch。
+3. 交互与多端：依据 code-snippet-enhancer 和 tutorial-responsive-layout，包含路径标注、复制按钮与防横滚隔离。
+4. 双格式输出：同时提供规范 Markdown 与单文件独立 index.html。</code></pre>
+        </div>
+
+        <!-- Semantic Tip Callout -->
+        <div class="my-6 p-4 rounded-xl border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50 dark:bg-emerald-950/20 flex gap-3 text-sm">
+          <div class="text-emerald-600 dark:text-emerald-400 text-lg flex-shrink-0">💡</div>
+          <div>
+            <div class="font-semibold text-emerald-900 dark:text-emerald-300 mb-1">技巧：利用 VS Code # 符号直接指定上下文</div>
+            <p class="text-emerald-800 dark:text-emerald-200">
+              在 Copilot Chat 输入框中键入 <code>#file:AGENTS.md</code> 或 <code>#file:docs/design-system.md</code>，能够强制让 Copilot 读取规则文件的具体参数，确保生成的调色板与行宽数值 100% 精确吻合。
+            </p>
+          </div>
+        </div>
+
+        <!-- Sub-step 3 -->
+        <h3 id="step-3" class="text-lg font-bold text-slate-900 dark:text-white mt-8 mb-3">
+          步骤三：正文落地的“四步动作节拍”法则
+        </h3>
+        <p class="mb-3 text-slate-700 dark:text-slate-300">
+          生成教程正文时，检查 AI 是否严格遵循了“四步动作节拍”。每一个操作小节必须形成<strong>“意图动词 $\rightarrow$ 原理简析 $\rightarrow$ 执行代码 $\rightarrow$ 终端结果”</strong>的闭环回路：
+        </p>
+
+        <!-- Terminal Output Example -->
+        <div class="my-4 rounded-xl overflow-hidden border border-slate-700 bg-slate-950 text-slate-200 text-xs font-mono p-4">
+          <div class="text-slate-500 mb-2 font-sans text-[11px]">$ 执行生成的教程验证脚本并观察回显</div>
+          <div class="text-emerald-400">✔ [Step 1] Environment variables schema parsed.</div>
+          <div class="text-emerald-400">✔ [Step 2] Worker connection established.</div>
+          <div class="text-blue-400">ℹ [Step 3] Output buffer backpressure threshold verified (5000 items/s).</div>
+          <div class="text-slate-400 mt-2">✨ All steps executed successfully.</div>
+        </div>
+
+        <!-- Sub-step 4 -->
+        <h3 id="step-4" class="text-lg font-bold text-slate-900 dark:text-white mt-8 mb-3">
+          步骤四：一键写入文件并即时双击预览
+        </h3>
+        <p class="mb-3 text-slate-700 dark:text-slate-300">
+          Copilot 生成代码后，直接让其利用文件创建能力将结果保存至工作区（如保存为 <code>my-tutorial.md</code> 与 <code>my-tutorial.html</code>）。对于 HTML 文件，直接在文件管理器中双击即可在浏览器中打开，零编译环境依赖体验现代排版与交互。
+        </p>
+
+        <!-- Section 4 -->
+        <h2 id="prompt-library" class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mt-12 mb-4">
+          4. 场景化 Prompt 模版库
+        </h2>
+        <p class="mb-4 text-slate-700 dark:text-slate-300">
+          针对不同的创作阶段，可直接选用以下经过调优的提示词模版：
+        </p>
+
+        <!-- Progressive Disclosure 1 -->
+        <details class="my-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-4 text-sm group">
+          <summary class="font-semibold text-slate-800 dark:text-slate-200 cursor-pointer list-none flex items-center justify-between select-none">
+            <span class="flex items-center gap-2">
+              <span class="text-blue-600">📋</span> 模板 A：从零新建完整技术教程（标准生成）
+            </span>
+            <span class="text-slate-400 group-open:rotate-180 transition-transform">▼</span>
+          </summary>
+          <div class="mt-3 pt-3 border-t border-[var(--border-subtle)] text-slate-600 dark:text-slate-300">
+            <pre class="p-3 bg-slate-900 text-slate-200 rounded-lg text-xs font-mono overflow-x-auto"><code>请充当 documentation-designer 专家，基于当前项目的 AGENTS.md 规则，为我编写一篇关于【主题】的实战教程。
+- 主体结构：前置依赖 -> 学习目标 -> 架构拓扑(Mermaid) -> 步骤1..N(四步法) -> 验证回显 -> 避坑指南。
+- 视觉与交互：参考 tutorial-color-palette 与 tutorial-reading-experience 规范，配置低眩光双模样式与 60-75ch 黄金行宽。
+- 交付方式：先输出 Markdown 格式，然后将 HTML 版本保存到当前工作区。</code></pre>
+          </div>
+        </details>
+
+        <!-- Progressive Disclosure 2 -->
+        <details class="my-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-4 text-sm group">
+          <summary class="font-semibold text-slate-800 dark:text-slate-200 cursor-pointer list-none flex items-center justify-between select-none">
+            <span class="flex items-center gap-2">
+              <span class="text-purple-600">✨</span> 模板 B：旧教程翻新与体验升级（重构优化）
+            </span>
+            <span class="text-slate-400 group-open:rotate-180 transition-transform">▼</span>
+          </summary>
+          <div class="mt-3 pt-3 border-t border-[var(--border-subtle)] text-slate-600 dark:text-slate-300">
+            <pre class="p-3 bg-slate-900 text-slate-200 rounded-lg text-xs font-mono overflow-x-auto"><code>请调用 tutorial-ui-optimizer、tutorial-reading-experience 和 accessibility-reviewer，对我选中的旧教程文档进行重构：
+1. 重新规划行距与标题锚点滚动偏移；
+2. 为所有代码片段补充文件名标签、一键复制及终端预期输出回显；
+3. 将散乱的注意点重构为标准的 GitHub Admonition 语法；
+4. 基于 templates/html/tutorial-template.html 输出可离线浏览的独立 index.html。</code></pre>
+          </div>
+        </details>
+
+        <!-- Section 5 -->
+        <h2 id="dual-format" class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mt-12 mb-4">
+          5. 双格式产物交付标准
+        </h2>
+        <p class="mb-4 text-slate-700 dark:text-slate-300">
+          基于本体系生成的教程产物必须实现“双轨并行”，满足不同发布渠道的诉求：
+        </p>
+
+        <div class="overflow-x-auto my-6">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="border-b border-[var(--border-strong)] bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200">
+                <th class="p-3 font-semibold">格式类型</th>
+                <th class="p-3 font-semibold">主要应用渠道</th>
+                <th class="p-3 font-semibold">特色与优势</th>
+                <th class="p-3 font-semibold">规范要求</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-[var(--border-subtle)] text-slate-600 dark:text-slate-300">
+              <tr>
+                <td class="p-3 font-mono font-medium text-blue-600 dark:text-blue-400">Markdown (.md)</td>
+                <td class="p-3">Git 仓库、GitHub Wiki、VitePress、Docusaurus</td>
+                <td class="p-3">纯文本轻量、易版本控制、原生支持 Diff 与 PR 审核</td>
+                <td class="p-3">遵循 GitHub Admonitions 提示框语法；代码块标注文件名</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-mono font-medium text-emerald-600 dark:text-emerald-400">独立单文件 (.html)</td>
+                <td class="p-3">本地双击离线阅读、产品内置帮助页、邮件/微信分发</td>
+                <td class="p-3">零编译环境依赖、内置暗黑切换、阅读进度条、一键复制</td>
+                <td class="p-3">基于 tutorial-template.html；集成 Mermaid.js 与 Tailwind 预设</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Section 6 -->
+        <h2 id="rubric" class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mt-12 mb-4">
+          6. 质量验收与打分表 (0–100 Rubric)
+        </h2>
+        <p class="mb-4 text-slate-700 dark:text-slate-300">
+          生成完毕后，可以参照工作区内置的评分量表进行核验（满分 100 分，90 分以上为企业级金牌标准）：
+        </p>
+
+        <div class="space-y-3 my-6">
+          <div class="flex items-start gap-3 p-3.5 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)]">
+            <span class="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">20</span>
+            <div>
+              <div class="font-semibold text-sm text-slate-900 dark:text-white">视觉美学与配色调色板 (20分)</div>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">浅色 #F8FAFC 与深色 #0B0F19 低眩光设计；文字对比度 $\ge 4.5:1$；代码语法主题与正文背景协调。</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 p-3.5 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)]">
+            <span class="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">20</span>
+            <div>
+              <div class="font-semibold text-sm text-slate-900 dark:text-white">阅读体验与排版韵律 (20分)</div>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">正文行宽锁定在 60–75ch；行高 1.75–1.8；标题预留 5rem 滚动防遮挡边距；包含阅读进度条。</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 p-3.5 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)]">
+            <span class="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">20</span>
+            <div>
+              <div class="font-semibold text-sm text-slate-900 dark:text-white">教学架构与四步节奏 (20分)</div>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">具备明确的学习目标与预估时间；每步遵循“动词目标 -> 简析 -> 代码 -> 终端回显”；进阶细节折叠。</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 p-3.5 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)]">
+            <span class="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">20</span>
+            <div>
+              <div class="font-semibold text-sm text-slate-900 dark:text-white">多屏幕适配与横滚隔离 (20分)</div>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">桌面三栏优雅折叠为移动端单栏；代码与宽表格横滚不破视口；触控热区 $\ge 44\text{px}$ 并适配安全区。</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 p-3.5 rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-surface)]">
+            <span class="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">20</span>
+            <div>
+              <div class="font-semibold text-sm text-slate-900 dark:text-white">技术准确性与双格式交付 (20分)</div>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">同时提供语义化 Markdown 与独立可运行 HTML；无死链，代码无语法错误，双击即可无障碍演示。</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pagination Bottom Cards -->
+        <div class="mt-14 pt-8 border-t border-[var(--border-subtle)] grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <a href="agentic-tutorial-creation-guide.md" class="p-4 rounded-xl border border-[var(--border-subtle)] hover:border-blue-400 bg-[var(--bg-surface)] transition-all flex flex-col justify-center">
+            <span class="text-xs text-slate-400">← 阅读配套指南 (Markdown)</span>
+            <span class="text-sm font-semibold text-slate-800 dark:text-slate-200 mt-1">面向使用者的实战指南</span>
+          </a>
+          <a href="#overview" class="p-4 rounded-xl border border-[var(--border-subtle)] hover:border-blue-400 bg-[var(--bg-surface)] transition-all flex flex-col justify-center text-right sm:items-end">
+            <span class="text-xs text-blue-500 font-medium">返回开头 ↑</span>
+            <span class="text-sm font-semibold text-slate-800 dark:text-slate-200 mt-1">1. 核心理念与资产总览</span>
+          </a>
+        </div>
+
+      </article>
+    </main>
+
+    <!-- Right Sidebar: Sticky Table of Contents (TOC) -->
+    <aside class="hidden lg:block sticky top-24 h-[calc(100vh-7rem)] overflow-y-auto pl-2 text-sm">
+      <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">本页目录</h4>
+      <nav class="space-y-2 text-xs">
+        <a href="#overview" class="toc-link block text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">1. 核心理念与资产总览</a>
+        <a href="#workflow" class="toc-link block text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">2. 协同流水线拓扑</a>
+        <a href="#step-by-step" class="toc-link block text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">3. VS Code 实战四步法</a>
+        <a href="#prompt-library" class="toc-link block text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">4. 场景化 Prompt 模版库</a>
+        <a href="#dual-format" class="toc-link block text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">5. 双格式产物交付标准</a>
+        <a href="#rubric" class="toc-link block text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">6. 质量验收与打分表</a>
+      </nav>
+      
+      <div class="mt-8 pt-6 border-t border-[var(--border-subtle)]">
+        <a href="#" class="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 flex items-center gap-1">
+          ↑ 回到顶部
+        </a>
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- Global Footer (Subtle & Elegant) -->
+  <footer class="mt-auto border-t border-[var(--border-subtle)] bg-[var(--bg-surface)]/60 py-6 pb-20 lg:pb-6 text-center text-xs text-slate-400 dark:text-slate-500">
+    <div class="max-w-[1440px] mx-auto px-4 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2.5">
+      <div class="flex items-center gap-1.5">
+        <span class="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block"></span>
+        <span class="font-medium text-slate-600 dark:text-slate-400">Documentation Designer Pro</span>
+      </div>
+      <div>
+        <span>&copy; <span id="footer-year">2026</span> &middot; Created by <span class="font-medium text-slate-600 dark:text-slate-300">Geextudio</span></span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Mobile Bottom Floating Action Bar -->
+  <div class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[var(--bg-surface)]/95 backdrop-blur-md border-t border-[var(--border-subtle)] px-4 py-3 flex items-center justify-between text-xs shadow-lg">
+    <a href="#overview" class="px-3 py-1.5 rounded-lg border border-[var(--border-subtle)] text-slate-700 dark:text-slate-300 font-medium">
+      ↑ 顶部
+    </a>
+    <span class="text-slate-500 font-medium">Copilot Chat 实战指南</span>
+    <a href="#prompt-library" class="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700">
+      提示词库 →
+    </a>
+  </div>
+
+  <!-- Scripts: Theme, Reading Progress, Copy Code, Scrollspy -->
+  <script>
+    // 1. Mermaid Initialization
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default',
+      securityLevel: 'loose'
+    });
+
+    // 2. Dark / Light Theme Toggle & Persistence
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    const themeIcon = document.getElementById('theme-icon');
+    
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('doc_theme', theme);
+      themeIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
+    }
+
+    const savedTheme = localStorage.getItem('doc_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    setTheme(savedTheme);
+
+    themeToggleBtn.addEventListener('click', () => {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+    });
+
+    // 3. Scroll Reading Progress Bar
+    window.addEventListener('scroll', () => {
+      const winScroll = document.documentElement.scrollTop || document.body.scrollTop;
+      const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      const scrolled = (winScroll / height) * 100;
+      document.getElementById('progress-bar').style.width = scrolled + '%';
+    });
+
+    // 4. One-Click Code Copy Button with Instant Feedback
+    document.querySelectorAll('.copy-btn').forEach(button => {
+      button.addEventListener('click', async () => {
+        const codeText = button.getAttribute('data-code');
+        const label = button.querySelector('.copy-label');
+        try {
+          await navigator.clipboard.writeText(codeText);
+          label.textContent = '已复制!';
+          button.classList.add('text-green-400');
+          setTimeout(() => {
+            label.textContent = '复制';
+            button.classList.remove('text-green-400');
+          }, 2000);
+        } catch (err) {
+          console.error('Failed to copy text: ', err);
+        }
+      });
+    });
+
+    // 5. Scrollspy for Active TOC Highlight
+    const sections = document.querySelectorAll('article h2[id], article h3[id]');
+    const navLinks = document.querySelectorAll('.toc-link');
+
+    window.addEventListener('scroll', () => {
+      let current = '';
+      sections.forEach(section => {
+        const sectionTop = section.offsetTop - 120;
+        if (window.pageYOffset >= sectionTop) {
+          current = section.getAttribute('id');
+        }
+      });
+
+      navLinks.forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === `#${current}`) {
+          link.classList.add('active');
+        }
+      });
+    });
+
+    // 6. Dynamic Footer Year
+    const footerYearEl = document.getElementById('footer-year');
+    if (footerYearEl) {
+      footerYearEl.textContent = new Date().getFullYear();
+    }
+  </script>
+</body>
+</html>
